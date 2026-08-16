@@ -19,7 +19,7 @@ public class ModuleToggleButton extends Button {
     }
 
     @Override
-    protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    protected void renderContents(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         boolean hovered = isHovered();
         int bg = hovered ? GuiTheme.BG_ROW_HOVER : GuiTheme.BG_ROW;
         g.fill(getX(), getY(), getX() + getWidth(), getY() + getHeight(), bg);
