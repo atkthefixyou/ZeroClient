@@ -26,9 +26,11 @@ public class ModuleManager {
     }
 
     public void registerAll() {
-        // Thêm module thật ở đây khi code xong, ví dụ:
-        // register(new ZoomModule());
-    }
+    register(new com.zeroclient.client.module.movement.SprintModule());
+    register(new com.zeroclient.client.module.player.HungerAlertModule());
+    register(new com.zeroclient.client.module.smp.DeathLocationModule());
+    register(new com.zeroclient.client.module.render.FreecamModule());
+}
 
     public void register(Module module) {
         modulesByName.put(module.getName().toLowerCase(Locale.ROOT), module);

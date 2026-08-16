@@ -1,9 +1,10 @@
 {
 	"required": true,
-	"package": "com.zeroclient.mixin",
+	"package": "com.zeroclient.client.mixin",
 	"compatibilityLevel": "JAVA_21",
-	"mixins": [
-		"ExampleMixin"
+	"client": [
+		"MixinCamera",
+		"MixinMouseHandler"
 	],
 	"injectors": {
 		"defaultRequire": 1

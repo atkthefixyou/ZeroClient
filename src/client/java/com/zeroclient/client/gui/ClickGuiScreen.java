@@ -13,6 +13,9 @@ import java.util.List;
 
 public class ClickGuiScreen extends Screen {
 
+    private int panelWidth;
+    private int panelHeight;
+
     public ClickGuiScreen() {
         super(Component.literal("ZeroClient"));
     }
@@ -21,43 +24,43 @@ public class ClickGuiScreen extends Screen {
     protected void init() {
         super.init();
 
-        int x = GuiTheme.PANEL_GAP;
+        int categoryCount = ModuleCategory.values().length;
+        int usableWidth = this.width - GuiTheme.SIDE_MARGIN * 2 - GuiTheme.PANEL_GAP * (categoryCount - 1);
+        panelWidth = Math.max(90, usableWidth / categoryCount);
+
+        int x = GuiTheme.SIDE_MARGIN;
+        panelHeight = 0;
 
         for (ModuleCategory category : ModuleCategory.values()) {
             List<Module> modules = ModuleManager.getInstance().getByCategory(category);
-
             int y = GuiTheme.PANEL_TOP + GuiTheme.PANEL_HEADER_HEIGHT + GuiTheme.ROW_PADDING;
 
             for (Module module : modules) {
                 int rowX = x + GuiTheme.ROW_PADDING;
-                int rowWidth = GuiTheme.PANEL_WIDTH - GuiTheme.ROW_PADDING * 2;
-
+                int rowWidth = panelWidth - GuiTheme.ROW_PADDING * 2;
                 addRenderableWidget(new ModuleToggleButton(rowX, y, rowWidth, GuiTheme.ROW_HEIGHT, module));
-
                 y += GuiTheme.ROW_HEIGHT + 2;
             }
 
-            x += GuiTheme.PANEL_WIDTH + GuiTheme.PANEL_GAP;
+            int thisPanelHeight = GuiTheme.PANEL_HEADER_HEIGHT
+                    + modules.size() * (GuiTheme.ROW_HEIGHT + 2)
+                    + GuiTheme.ROW_PADDING;
+            panelHeight = Math.max(panelHeight, thisPanelHeight);
+
+            x += panelWidth + GuiTheme.PANEL_GAP;
         }
     }
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         g.fill(0, 0, this.width, this.height, GuiTheme.BG_MAIN);
+        g.drawString(this.font, "ZeroClient", GuiTheme.SIDE_MARGIN, 8, GuiTheme.TEXT_TITLE, false);
+        g.drawString(this.font, "Right Shift để đóng", GuiTheme.SIDE_MARGIN, 20, GuiTheme.TEXT_DIM, false);
 
-        g.drawString(this.font, "ZeroClient", GuiTheme.PANEL_GAP, 14, GuiTheme.TEXT_TITLE, false);
-        g.drawString(this.font, "Right Shift để đóng", GuiTheme.PANEL_GAP, 26, GuiTheme.TEXT_DIM, false);
-
-        int x = GuiTheme.PANEL_GAP;
+        int x = GuiTheme.SIDE_MARGIN;
         for (ModuleCategory category : ModuleCategory.values()) {
-            List<Module> modules = ModuleManager.getInstance().getByCategory(category);
-            int panelHeight = GuiTheme.PANEL_HEADER_HEIGHT
-                    + modules.size() * (GuiTheme.ROW_HEIGHT + 2)
-                    + GuiTheme.ROW_PADDING;
-
-            drawPanel(g, x, GuiTheme.PANEL_TOP, GuiTheme.PANEL_WIDTH, panelHeight, category.getDisplayName());
-
-            x += GuiTheme.PANEL_WIDTH + GuiTheme.PANEL_GAP;
+            drawPanel(g, x, GuiTheme.PANEL_TOP, panelWidth, panelHeight, category.getDisplayName());
+            x += panelWidth + GuiTheme.PANEL_GAP;
         }
 
         super.render(g, mouseX, mouseY, partialTick);
@@ -65,14 +68,12 @@ public class ClickGuiScreen extends Screen {
 
     private void drawPanel(GuiGraphics g, int x, int y, int width, int height, String title) {
         g.fill(x, y, x + width, y + height, GuiTheme.BG_PANEL);
-
         g.fill(x, y, x + width, y + 1, GuiTheme.BORDER_CYAN);
         g.fill(x, y + height - 1, x + width, y + height, GuiTheme.BORDER_CYAN_DIM);
         g.fill(x, y, x + 1, y + height, GuiTheme.BORDER_CYAN);
         g.fill(x + width - 1, y, x + width, y + height, GuiTheme.BORDER_CYAN);
-
         g.fill(x + 1, y + 1, x + width - 1, y + GuiTheme.PANEL_HEADER_HEIGHT, 0xFF15304F);
-        g.drawCenteredString(this.font, title, x + width / 2, y + 9, GuiTheme.TEXT_TITLE);
+        g.drawCenteredString(this.font, title, x + width / 2, y + 6, GuiTheme.TEXT_TITLE);
     }
 
     @Override
