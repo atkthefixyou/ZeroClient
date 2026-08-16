@@ -13,14 +13,17 @@ public abstract class Module {
         this.category = category;
     }
 
-    /** Gọi khi module được bật */
     public void onEnable() {}
-
-    /** Gọi khi module bị tắt */
     public void onDisable() {}
-
-    /** Gọi mỗi tick client khi module đang bật (override nếu cần) */
     public void onTick() {}
+
+    public boolean hasConfig() {
+        return false;
+    }
+
+    public java.util.List<ConfigEntry> buildConfigEntries() {
+        return java.util.Collections.emptyList();
+    }
 
     public final void toggle() {
         setEnabled(!enabled);

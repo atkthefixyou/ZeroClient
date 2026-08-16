@@ -38,7 +38,7 @@ public class ClickGuiScreen extends Screen {
             for (Module module : modules) {
                 int rowX = x + GuiTheme.ROW_PADDING;
                 int rowWidth = panelWidth - GuiTheme.ROW_PADDING * 2;
-                addRenderableWidget(new ModuleToggleButton(rowX, y, rowWidth, GuiTheme.ROW_HEIGHT, module));
+                addRenderableWidget(new ModuleToggleButton(rowX, y, rowWidth, GuiTheme.ROW_HEIGHT, module, this));
                 y += GuiTheme.ROW_HEIGHT + 2;
             }
 

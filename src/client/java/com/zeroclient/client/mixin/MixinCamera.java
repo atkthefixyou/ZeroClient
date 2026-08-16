@@ -26,6 +26,7 @@ public abstract class MixinCamera {
                           float partialTicks, CallbackInfo info) {
         FreecamController controller = FreecamController.instance;
         if (controller.isActive()) {
+            controller.onRenderTick(partialTicks);
             setRotation(controller.getYRot(), controller.getXRot());
             setPosition(controller.getX(), controller.getY(), controller.getZ());
             info.cancel();

@@ -5,17 +5,21 @@ import com.zeroclient.client.module.Module;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 public class ModuleToggleButton extends Button {
 
     private final Module module;
+    private final Screen parentScreen;
+    private boolean rightMouseWasDown = false;
 
-    public ModuleToggleButton(int x, int y, int width, int height, Module module) {
+    public ModuleToggleButton(int x, int y, int width, int height, Module module, Screen parentScreen) {
         super(x, y, width, height, Component.literal(module.getName()), btn -> {
             module.toggle();
         }, DEFAULT_NARRATION);
         this.module = module;
+        this.parentScreen = parentScreen;
     }
 
     @Override
@@ -27,9 +31,26 @@ public class ModuleToggleButton extends Button {
         g.drawString(net.minecraft.client.Minecraft.getInstance().font, module.getName(),
                 getX() + 6, getY() + (getHeight() - 8) / 2, GuiTheme.TEXT_NORMAL, false);
 
+        if (module.hasConfig()) {
+            g.fill(getX() + getWidth() - GuiTheme.TOGGLE_WIDTH - 12, getY() + getHeight() / 2 - 1,
+                    getX() + getWidth() - GuiTheme.TOGGLE_WIDTH - 8, getY() + getHeight() / 2 + 1,
+                    GuiTheme.TEXT_DIM);
+        }
+
         int toggleX = getX() + getWidth() - GuiTheme.TOGGLE_WIDTH - 4;
         int toggleY = getY() + (getHeight() - GuiTheme.TOGGLE_HEIGHT) / 2;
         drawToggle(g, toggleX, toggleY, module.isEnabled());
+
+        if (module.hasConfig() && hovered) {
+            long windowHandle = net.minecraft.client.Minecraft.getInstance().getWindow().getWindow();
+            boolean rightDown = org.lwjgl.glfw.GLFW.glfwGetMouseButton(windowHandle, org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+            if (rightDown && !rightMouseWasDown) {
+                net.minecraft.client.Minecraft.getInstance().setScreen(new ModuleConfigScreen(parentScreen, module));
+            }
+            rightMouseWasDown = rightDown;
+        } else {
+            rightMouseWasDown = false;
+        }
     }
 
     private void drawToggle(GuiGraphics g, int x, int y, boolean on) {
