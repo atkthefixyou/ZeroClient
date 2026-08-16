@@ -112,14 +112,14 @@ public class FreecamController {
     }
 
     public void onRenderTick(float partialTicks) {
-        if (!active || playerInput == null) return;
+        if (!active || freecamInput == null) return;
 
         long currTime = System.nanoTime();
         double frameTime = lastTime == 0 ? 0 : (currTime - lastTime) / 1_000_000_000.0;
         lastTime = currTime;
         if (frameTime <= 0 || frameTime > 1) return;
 
-        var keys = playerInput.keyPresses;
+        var keys = freecamInput.keyPresses;
         double forwardImpulse = calcImpulse(keys.forward(), keys.backward());
         double leftImpulse = calcImpulse(keys.left(), keys.right());
         double upImpulse = calcImpulse(keys.jump(), keys.shift());
