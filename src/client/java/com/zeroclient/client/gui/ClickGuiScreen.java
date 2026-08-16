@@ -12,7 +12,6 @@ import net.minecraft.network.chat.Component;
 public class ClickGuiScreen extends Screen {
 
     private static final int COLUMN_WIDTH = 230;
-    private static final int COLUMN_GAP = 12;
     private static final int TOP_MARGIN = 70;
 
     public ClickGuiScreen() {
@@ -47,9 +46,10 @@ public class ClickGuiScreen extends Screen {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(guiGraphics, mouseX, mouseY, partialTick);
-        guiGraphics.drawString(this.font, "ZeroClient", 12, 12, 0x4fd1e8, false);
+        // super.render() đã tự gọi renderBackground() bên trong —
+        // không gọi lại thủ công ở đây, nếu không sẽ crash "Can only blur once per frame"
         super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawString(this.font, "ZeroClient", 12, 12, 0x4fd1e8, false);
     }
 
     @Override
