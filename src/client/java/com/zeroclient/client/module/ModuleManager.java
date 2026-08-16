@@ -1,7 +1,5 @@
 package com.zeroclient.client.module;
 
-import com.zeroclient.client.module.render.FullbrightModule;
-
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
@@ -27,11 +25,9 @@ public class ModuleManager {
         return INSTANCE;
     }
 
-    /** Đăng ký toàn bộ module ở đây — thêm dòng mới mỗi khi tạo module mới */
     public void registerAll() {
-        register(new FullbrightModule());
+        // Thêm module thật ở đây khi code xong, ví dụ:
         // register(new ZoomModule());
-        // register(new AutoBuildModule());
     }
 
     public void register(Module module) {
@@ -51,7 +47,6 @@ public class ModuleManager {
         return modulesByName.values();
     }
 
-    /** Gọi mỗi tick từ event bus — chỉ tick module đang bật */
     public void tickAll() {
         for (Module m : modulesByName.values()) {
             if (m.isEnabled()) {
