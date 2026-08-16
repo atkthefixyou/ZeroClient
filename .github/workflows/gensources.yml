@@ -20,30 +20,27 @@ jobs:
       - name: Generate sources
         run: ./gradlew genSources --stacktrace
 
-      - name: List all jars in gradle caches for debugging
+      - name: Inspect jar contents
         run: |
-          echo "=== Toàn bộ jar trong ~/.gradle chứa từ 'minecraft' hoặc 'loom' ==="
-          find ~/.gradle -iname "*.jar" 2>/dev/null | grep -iE "minecraft|loom" || echo "Không tìm thấy"
-          echo "=== Toàn bộ thư mục loom-cache nếu có ==="
-          find ~/.gradle -type d -iname "*loom*" 2>/dev/null || echo "Không có thư mục loom"
-          echo "=== Toàn bộ file .java lẻ (nếu Loom giải nén thẳng ra thư mục thay vì đóng jar) ==="
-          find ~/.gradle -iname "Button.java" 2>/dev/null || echo "Không tìm thấy Button.java"
-          find / -iname "Button.java" 2>/dev/null | grep -v "/proc/" | head -5 || echo "Không tìm thấy ở đâu cả"
+          JAR=~/.gradle/caches/fabric-loom/1.21.11/minecraft-client-only.jar
+          echo "=== Vài dòng đầu danh sách file trong jar ==="
+          unzip -l "$JAR" | head -30
+          echo "=== Đếm số file .java trong jar ==="
+          unzip -l "$JAR" | grep -c "\.java$" || echo "0 file .java"
+          echo "=== Đếm số file .class trong jar ==="
+          unzip -l "$JAR" | grep -c "\.class$" || echo "0 file .class"
+          echo "=== Tìm cụ thể Button trong jar ==="
+          unzip -l "$JAR" | grep -i "button" || echo "Không thấy Button"
 
-      - name: Copy any candidate jar or java files
+      - name: Copy jars for download
         run: |
           mkdir -p /tmp/mcsrc-output
-          find ~/.gradle -iname "*.jar" 2>/dev/null | grep -iE "minecraft.*(sources|mapped)|mapped.*minecraft" | while read f; do
-            cp "$f" /tmp/mcsrc-output/ 2>/dev/null || true
-          done
-          find / -iname "Button.java" 2>/dev/null | grep -v "/proc/" | while read f; do
-            mkdir -p /tmp/mcsrc-output/loose-java
-            cp "$f" /tmp/mcsrc-output/loose-java/ 2>/dev/null || true
-          done
-          ls -la /tmp/mcsrc-output/ || echo "Thư mục output trống"
+          cp ~/.gradle/caches/fabric-loom/1.21.11/minecraft-client-only.jar /tmp/mcsrc-output/ 2>/dev/null || true
+          cp ~/.gradle/caches/fabric-loom/1.21.11/minecraft-common.jar /tmp/mcsrc-output/ 2>/dev/null || true
+          ls -la /tmp/mcsrc-output/
 
       - uses: actions/upload-artifact@v4
         with:
           name: minecraft-sources
-          path: /tmp/mcsrc-output/**
+          path: /tmp/mcsrc-output/*.jar
           if-no-files-found: warn
