@@ -17,30 +17,45 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Generate sources
-        run: ./gradlew genSources --stacktrace
+      - name: Prime Loom cache via build
+        run: ./gradlew compileClientJava --stacktrace || true
 
-      - name: Inspect jar contents
+      - name: Locate the mapped (named) minecraft jar
         run: |
-          JAR=~/.gradle/caches/fabric-loom/1.21.11/minecraft-client-only.jar
-          echo "=== Vài dòng đầu danh sách file trong jar ==="
-          unzip -l "$JAR" | head -30
-          echo "=== Đếm số file .java trong jar ==="
-          unzip -l "$JAR" | grep -c "\.java$" || echo "0 file .java"
-          echo "=== Đếm số file .class trong jar ==="
-          unzip -l "$JAR" | grep -c "\.class$" || echo "0 file .class"
-          echo "=== Tìm cụ thể Button trong jar ==="
-          unzip -l "$JAR" | grep -i "button" || echo "Không thấy Button"
+          echo "=== Toàn bộ jar trong fabric-loom cache ==="
+          find ~/.gradle/caches/fabric-loom -iname "*.jar" 2>/dev/null
 
-      - name: Copy jars for download
+      - name: Download CFR decompiler
         run: |
-          mkdir -p /tmp/mcsrc-output
-          cp ~/.gradle/caches/fabric-loom/1.21.11/minecraft-client-only.jar /tmp/mcsrc-output/ 2>/dev/null || true
-          cp ~/.gradle/caches/fabric-loom/1.21.11/minecraft-common.jar /tmp/mcsrc-output/ 2>/dev/null || true
-          ls -la /tmp/mcsrc-output/
+          curl -L -o cfr.jar https://github.com/leibnitz27/cfr/releases/download/0.152/cfr-0.152.jar
+
+      - name: Decompile target classes
+        run: |
+          mkdir -p /tmp/decompiled
+          NAMED_JAR=$(find ~/.gradle/caches/fabric-loom -iname "*named*.jar" 2>/dev/null | grep -v sources | head -1)
+          if [ -z "$NAMED_JAR" ]; then
+            echo "Không tìm thấy jar named, thử minecraft-client-only.jar thay thế"
+            NAMED_JAR=~/.gradle/caches/fabric-loom/1.21.11/minecraft-client-only.jar
+          fi
+          echo "Dùng jar: $NAMED_JAR"
+          java -jar cfr.jar "$NAMED_JAR" \
+            --outputdir /tmp/decompiled \
+            2>&1 | tail -50
+
+      - name: Find Button and Screen source after decompile
+        run: |
+          find /tmp/decompiled -iname "Button.java" -o -iname "AbstractWidget.java" -o -iname "Screen.java" 2>/dev/null
+
+      - name: Package relevant files only
+        run: |
+          mkdir -p /tmp/output
+          find /tmp/decompiled -iname "Button.java" -exec cp {} /tmp/output/ \; 2>/dev/null || true
+          find /tmp/decompiled -iname "AbstractWidget.java" -exec cp {} /tmp/output/ \; 2>/dev/null || true
+          find /tmp/decompiled -iname "Screen.java" -exec cp {} /tmp/output/ \; 2>/dev/null || true
+          ls -la /tmp/output/
 
       - uses: actions/upload-artifact@v4
         with:
           name: minecraft-sources
-          path: /tmp/mcsrc-output/*.jar
+          path: /tmp/output/*
           if-no-files-found: warn
