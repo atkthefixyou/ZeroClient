@@ -12,6 +12,8 @@ public class ModuleToggleButton extends Button {
 
     private final Module module;
     private final Screen parentScreen;
+    private long lastPressTime = 0;
+    private static final long DOUBLE_CLICK_MS = 400;
 
     public ModuleToggleButton(int x, int y, int width, int height, Module module, Screen parentScreen) {
         super(x, y, width, height, Component.literal(module.getName()), btn -> {}, DEFAULT_NARRATION);
@@ -21,7 +23,11 @@ public class ModuleToggleButton extends Button {
 
     @Override
     public void onPress() {
-        if (module.hasConfig() && Screen.hasShiftDown()) {
+        long now = System.currentTimeMillis();
+        boolean isDoubleClick = (now - lastPressTime) < DOUBLE_CLICK_MS;
+        lastPressTime = now;
+
+        if (module.hasConfig() && isDoubleClick) {
             net.minecraft.client.Minecraft.getInstance().setScreen(new ModuleConfigScreen(parentScreen, module));
         } else {
             module.toggle();
