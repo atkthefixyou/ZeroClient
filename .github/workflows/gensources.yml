@@ -20,11 +20,6 @@ jobs:
       - name: Prime Loom cache via build
         run: ./gradlew compileClientJava --stacktrace || true
 
-      - name: Locate the mapped (named) minecraft jar
-        run: |
-          echo "=== Toàn bộ jar trong fabric-loom cache ==="
-          find ~/.gradle/caches/fabric-loom -iname "*.jar" 2>/dev/null
-
       - name: Download CFR decompiler
         run: |
           curl -L -o cfr.jar https://github.com/leibnitz27/cfr/releases/download/0.152/cfr-0.152.jar
@@ -32,15 +27,15 @@ jobs:
       - name: Decompile target classes
         run: |
           mkdir -p /tmp/decompiled
-          NAMED_JAR=$(find ~/.gradle/caches/fabric-loom -iname "*named*.jar" 2>/dev/null | grep -v sources | head -1)
-          if [ -z "$NAMED_JAR" ]; then
-            echo "Không tìm thấy jar named, thử minecraft-client-only.jar thay thế"
-            NAMED_JAR=~/.gradle/caches/fabric-loom/1.21.11/minecraft-client-only.jar
+          MAPPED_JAR=$(find ~/.gradle/caches/fabric-loom/minecraftMaven -iname "minecraft-clientonly-*.jar" 2>/dev/null | grep -v intermediary | head -1)
+          echo "Dùng jar: $MAPPED_JAR"
+          if [ -z "$MAPPED_JAR" ]; then
+            echo "LỖI: không tìm thấy jar mapped"
+            exit 1
           fi
-          echo "Dùng jar: $NAMED_JAR"
-          java -jar cfr.jar "$NAMED_JAR" \
+          java -jar cfr.jar "$MAPPED_JAR" \
             --outputdir /tmp/decompiled \
-            2>&1 | tail -50
+            2>&1 | tail -30
 
       - name: Find Button and Screen source after decompile
         run: |
