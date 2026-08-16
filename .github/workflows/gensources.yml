@@ -20,15 +20,30 @@ jobs:
       - name: Generate sources
         run: ./gradlew genSources --stacktrace
 
-      - name: Locate sources jar
+      - name: List all jars in gradle caches for debugging
         run: |
-          find ~/.gradle -iname "*sources*.jar" -exec cp {} ./ \; || true
-          ls -la *.jar || echo "Không tìm thấy jar nào ở thư mục gốc, kiểm tra bên trong .gradle"
-          find ~/.gradle -iname "*.jar" | grep -i minecraft || true
+          echo "=== Toàn bộ jar trong ~/.gradle chứa từ 'minecraft' hoặc 'loom' ==="
+          find ~/.gradle -iname "*.jar" 2>/dev/null | grep -iE "minecraft|loom" || echo "Không tìm thấy"
+          echo "=== Toàn bộ thư mục loom-cache nếu có ==="
+          find ~/.gradle -type d -iname "*loom*" 2>/dev/null || echo "Không có thư mục loom"
+          echo "=== Toàn bộ file .java lẻ (nếu Loom giải nén thẳng ra thư mục thay vì đóng jar) ==="
+          find ~/.gradle -iname "Button.java" 2>/dev/null || echo "Không tìm thấy Button.java"
+          find / -iname "Button.java" 2>/dev/null | grep -v "/proc/" | head -5 || echo "Không tìm thấy ở đâu cả"
+
+      - name: Copy any candidate jar or java files
+        run: |
+          mkdir -p /tmp/mcsrc-output
+          find ~/.gradle -iname "*.jar" 2>/dev/null | grep -iE "minecraft.*(sources|mapped)|mapped.*minecraft" | while read f; do
+            cp "$f" /tmp/mcsrc-output/ 2>/dev/null || true
+          done
+          find / -iname "Button.java" 2>/dev/null | grep -v "/proc/" | while read f; do
+            mkdir -p /tmp/mcsrc-output/loose-java
+            cp "$f" /tmp/mcsrc-output/loose-java/ 2>/dev/null || true
+          done
+          ls -la /tmp/mcsrc-output/ || echo "Thư mục output trống"
 
       - uses: actions/upload-artifact@v4
         with:
           name: minecraft-sources
-          path: |
-            *.jar
+          path: /tmp/mcsrc-output/**
           if-no-files-found: warn
