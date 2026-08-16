@@ -14,7 +14,8 @@ public class SprintModule extends Module {
     public void onTick() {
         var mc = Minecraft.getInstance();
         if (mc.player != null && mc.player.input != null) {
-            if (mc.player.input.forwardImpulse > 0 && !mc.player.isSprinting()) {
+            boolean movingForward = mc.player.input.keyPresses.forward();
+            if (movingForward && !mc.player.isSprinting()) {
                 mc.player.setSprinting(true);
             }
         }
