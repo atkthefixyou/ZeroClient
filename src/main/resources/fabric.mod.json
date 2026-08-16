@@ -3,14 +3,11 @@
 	"id": "zeroclient",
 	"version": "${version}",
 	"name": "ZeroClient",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "ZeroClient — bộ công cụ QoL hợp lệ cho Survival SMP",
 	"authors": [
-		"Me!"
+		"Phú"
 	],
-	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
-	},
+	"contact": {},
 	"license": "CC0-1.0",
 	"icon": "assets/zeroclient/icon.png",
 	"environment": "*",
@@ -37,5 +34,8 @@
 		"minecraft": "~1.21.11",
 		"java": ">=21",
 		"fabric-api": "*"
+	},
+	"suggests": {
+		"modmenu": "*"
 	}
 }

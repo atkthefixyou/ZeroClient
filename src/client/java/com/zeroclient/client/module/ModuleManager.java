@@ -29,7 +29,6 @@ public class ModuleManager {
     register(new com.zeroclient.client.module.movement.SprintModule());
     register(new com.zeroclient.client.module.player.HungerAlertModule());
     register(new com.zeroclient.client.module.smp.DeathLocationModule());
-    register(new com.zeroclient.client.module.render.FreecamModule());
 }
 
     public void register(Module module) {
