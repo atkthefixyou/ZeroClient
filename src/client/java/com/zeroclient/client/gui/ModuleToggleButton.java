@@ -6,7 +6,6 @@ import com.zeroclient.client.module.Module;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.MouseInput;
 import net.minecraft.network.chat.Component;
 
 public class ModuleToggleButton extends Button {
@@ -15,11 +14,18 @@ public class ModuleToggleButton extends Button {
     private final Screen parentScreen;
 
     public ModuleToggleButton(int x, int y, int width, int height, Module module, Screen parentScreen) {
-        super(x, y, width, height, Component.literal(module.getName()), btn -> {
-            module.toggle();
-        }, DEFAULT_NARRATION);
+        super(x, y, width, height, Component.literal(module.getName()), btn -> {}, DEFAULT_NARRATION);
         this.module = module;
         this.parentScreen = parentScreen;
+    }
+
+    @Override
+    public void onPress() {
+        if (module.hasConfig() && Screen.hasShiftDown()) {
+            net.minecraft.client.Minecraft.getInstance().setScreen(new ModuleConfigScreen(parentScreen, module));
+        } else {
+            module.toggle();
+        }
     }
 
     @Override
@@ -40,15 +46,6 @@ public class ModuleToggleButton extends Button {
         int toggleX = getX() + getWidth() - GuiTheme.TOGGLE_WIDTH - 4;
         int toggleY = getY() + (getHeight() - GuiTheme.TOGGLE_HEIGHT) / 2;
         drawToggle(g, toggleX, toggleY, module.isEnabled());
-    }
-
-    @Override
-    public boolean mouseClicked(MouseInput input, boolean doubleClick) {
-        if (module.hasConfig() && input.isRight() && isHovered()) {
-            net.minecraft.client.Minecraft.getInstance().setScreen(new ModuleConfigScreen(parentScreen, module));
-            return true;
-        }
-        return super.mouseClicked(input, doubleClick);
     }
 
     private void drawToggle(GuiGraphics g, int x, int y, boolean on) {
