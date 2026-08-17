@@ -50,7 +50,7 @@ public class LitematicReader {
             palette.add(blockName);
         }
 
-        long[] blockStatesArray = region.getLongArrayOrEmpty("BlockStates");
+        long[] blockStatesArray = region.getLongArray("BlockStates").orElse(new long[0]);
 
         int totalBlocks = width * height * length;
         if (totalBlocks == 0 || blockStatesArray.length == 0) return;
