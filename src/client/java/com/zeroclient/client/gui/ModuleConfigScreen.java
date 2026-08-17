@@ -47,9 +47,10 @@ public class ModuleConfigScreen extends Screen {
         List<TextConfigEntry> textEntries = module.buildTextEntries();
         for (TextConfigEntry entry : textEntries) {
             EditBox box = new EditBox(this.font, panelX + 10, y + 10, PANEL_WIDTH - 20, 16,
-                    Component.literal(entry.label));
-            box.setValue(entry.getter.get());
-            box.setResponder(entry.setter::accept);
+        Component.literal(entry.label));
+box.setMaxLength(512); // thêm dòng này
+box.setValue(entry.getter.get());
+box.setResponder(entry.setter::accept);
             addRenderableWidget(box);
             y += ROW_HEIGHT + 10;
         }
