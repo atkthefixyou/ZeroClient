@@ -27,7 +27,7 @@ jobs:
       - name: Decompile target classes
         run: |
           mkdir -p /tmp/decompiled
-          MAPPED_JAR=$(find ~/.gradle/caches/fabric-loom/minecraftMaven -iname "minecraft-clientonly-*.jar" 2>/dev/null | grep -v intermediary | head -1)
+          MAPPED_JAR=$(find ~/.gradle/caches/fabric-loom/minecraftMaven -iname "minecraft-common-*.jar" 2>/dev/null | grep -v intermediary | head -1)
           echo "Dùng jar: $MAPPED_JAR"
           if [ -z "$MAPPED_JAR" ]; then
             echo "LỖI: không tìm thấy jar mapped"
@@ -37,16 +37,16 @@ jobs:
             --outputdir /tmp/decompiled \
             2>&1 | tail -30
 
-      - name: Find Button and Screen source after decompile
+      - name: Find NBT source after decompile
         run: |
-          find /tmp/decompiled -iname "Button.java" -o -iname "AbstractWidget.java" -o -iname "Screen.java" 2>/dev/null
+          find /tmp/decompiled -iname "CompoundTag.java" -o -iname "ListTag.java" -o -iname "NbtIo.java" -o -iname "Tag.java" 2>/dev/null
 
       - name: Package relevant files only
         run: |
           mkdir -p /tmp/output
-          find /tmp/decompiled -iname "Button.java" -exec cp {} /tmp/output/ \; 2>/dev/null || true
-          find /tmp/decompiled -iname "AbstractWidget.java" -exec cp {} /tmp/output/ \; 2>/dev/null || true
-          find /tmp/decompiled -iname "Screen.java" -exec cp {} /tmp/output/ \; 2>/dev/null || true
+          find /tmp/decompiled -iname "CompoundTag.java" -exec cp {} /tmp/output/ \; 2>/dev/null || true
+          find /tmp/decompiled -iname "ListTag.java" -exec cp {} /tmp/output/ \; 2>/dev/null || true
+          find /tmp/decompiled -iname "NbtIo.java" -exec cp {} /tmp/output/ \; 2>/dev/null || true
           ls -la /tmp/output/
 
       - uses: actions/upload-artifact@v4
