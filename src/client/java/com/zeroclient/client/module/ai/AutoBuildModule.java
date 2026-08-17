@@ -15,7 +15,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class AutoBuildModule extends Module {
 
@@ -24,6 +26,8 @@ public class AutoBuildModule extends Module {
     private static final int ACTION_INTERVAL_TICKS = 4;
 
     private String schematicPath = "";
+
+    private final Set<BlockPos> skippedThisSession = new HashSet<>();
 
     public AutoBuildModule() {
         super("AutoBuild", "Tự động xây theo file .litematic trong tầm với", ModuleCategory.AI_BUILD);
@@ -59,6 +63,7 @@ public class AutoBuildModule extends Module {
     public void loadSchematic(File file, BlockPos origin) {
         try {
             this.plan = LitematicReader.read(file, origin);
+            skippedThisSession.clear();
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
                 mc.player.displayClientMessage(
@@ -66,16 +71,16 @@ public class AutoBuildModule extends Module {
                                 "Đã tải schematic: " + plan.size() + " block"), false);
             }
         } catch (Exception e) {
-    plan = null;
-    e.printStackTrace();
-    Minecraft mc = Minecraft.getInstance();
-    if (mc.player != null) {
-        String detail = e.getClass().getSimpleName() + ": " + e.getMessage();
-        mc.player.displayClientMessage(
-                net.minecraft.network.chat.Component.literal(
-                        "Lỗi đọc schematic: " + detail), false);
-    }
-}
+            plan = null;
+            e.printStackTrace();
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null) {
+                String detail = e.getClass().getSimpleName() + ": " + e.getMessage();
+                mc.player.displayClientMessage(
+                        net.minecraft.network.chat.Component.literal(
+                                "Lỗi đọc schematic: " + detail), false);
+            }
+        }
     }
 
     @Override
@@ -85,19 +90,31 @@ public class AutoBuildModule extends Module {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
 
-        tickCounter++;
-        if (tickCounter < ACTION_INTERVAL_TICKS) return;
-        tickCounter = 0;
-
         BlockPos playerPos = mc.player.blockPosition();
         List<BuildScanner.BuildTask> tasks = BuildScanner.scan(plan, playerPos, 6);
-        if (tasks.isEmpty()) return;
 
-        BuildScanner.BuildTask task = tasks.get(0);
+        BuildScanner.BuildTask task = null;
+        for (BuildScanner.BuildTask t : tasks) {
+            if (!skippedThisSession.contains(t.pos())) {
+                task = t;
+                break;
+            }
+        }
+
+        if (task == null) {
+            if (!tasks.isEmpty()) skippedThisSession.clear();
+            return;
+        }
+
         BlockPos target = task.pos();
 
+        boolean aimed = AutoAimHelper.turnTowards(target);
+
         if (task.type() == BuildScanner.TaskType.BREAK) {
-            boolean aimed = AutoAimHelper.turnTowards(target);
+            tickCounter++;
+            if (tickCounter < ACTION_INTERVAL_TICKS) return;
+            tickCounter = 0;
+
             if (aimed && BlockInteractor.isLookingAt(target)) {
                 BlockInteractor.tryBreakBlock(target);
             }
@@ -105,12 +122,21 @@ public class AutoBuildModule extends Module {
         }
 
         Direction supportFace = BlockInteractor.findSupportFace(target);
-        if (supportFace == null) return;
+        if (supportFace == null) {
+            skippedThisSession.add(target);
+            return;
+        }
 
         int hotbarSlot = BlockInteractor.findHotbarSlot(mc.player, task.desiredBlockId());
-        if (hotbarSlot == -1) return;
+        if (hotbarSlot == -1) {
+            skippedThisSession.add(target);
+            return;
+        }
 
-        boolean aimed = AutoAimHelper.turnTowards(target);
+        tickCounter++;
+        if (tickCounter < ACTION_INTERVAL_TICKS) return;
+        tickCounter = 0;
+
         if (aimed) {
             BlockInteractor.tryPlaceBlock(target, supportFace, hotbarSlot);
         }
