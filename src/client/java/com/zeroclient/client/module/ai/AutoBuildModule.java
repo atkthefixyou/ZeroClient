@@ -1,10 +1,10 @@
 package com.zeroclient.client.module.ai;
 
-import com.zeroclient.client.build.litematica.AutoAimHelper;
-import com.zeroclient.client.build.litematica.BlockInteractor;
-import com.zeroclient.client.build.litematica.BuildPlan;
-import com.zeroclient.client.build.litematica.BuildScanner;
-import com.zeroclient.client.build.litematica.LitematicReader;
+import com.zeroclient.client.buildai.litematica.AutoAimHelper;
+import com.zeroclient.client.buildai.litematica.BlockInteractor;
+import com.zeroclient.client.buildai.litematica.BuildPlan;
+import com.zeroclient.client.buildai.litematica.BuildScanner;
+import com.zeroclient.client.buildai.litematica.LitematicReader;
 import com.zeroclient.client.module.Module;
 import com.zeroclient.client.module.ModuleCategory;
 
