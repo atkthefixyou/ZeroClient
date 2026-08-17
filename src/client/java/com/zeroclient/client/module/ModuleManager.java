@@ -29,6 +29,7 @@ public class ModuleManager {
     register(new com.zeroclient.client.module.movement.SprintModule());
     register(new com.zeroclient.client.module.player.HungerAlertModule());
     register(new com.zeroclient.client.module.smp.DeathLocationModule());
+    register(new com.zeroclient.client.module.ai.AutoBuildModule());
 }
 
     public void register(Module module) {
