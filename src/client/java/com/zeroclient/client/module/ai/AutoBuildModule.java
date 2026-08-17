@@ -66,14 +66,16 @@ public class AutoBuildModule extends Module {
                                 "Đã tải schematic: " + plan.size() + " block"), false);
             }
         } catch (Exception e) {
-            plan = null;
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.player != null) {
-                mc.player.displayClientMessage(
-                        net.minecraft.network.chat.Component.literal(
-                                "Lỗi đọc schematic: " + e.getMessage()), false);
-            }
-        }
+    plan = null;
+    e.printStackTrace();
+    Minecraft mc = Minecraft.getInstance();
+    if (mc.player != null) {
+        String detail = e.getClass().getSimpleName() + ": " + e.getMessage();
+        mc.player.displayClientMessage(
+                net.minecraft.network.chat.Component.literal(
+                        "Lỗi đọc schematic: " + detail), false);
+    }
+}
     }
 
     @Override
