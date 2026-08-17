@@ -5,8 +5,10 @@ import com.zeroclient.client.buildai.litematica.BlockInteractor;
 import com.zeroclient.client.buildai.litematica.BuildPlan;
 import com.zeroclient.client.buildai.litematica.BuildScanner;
 import com.zeroclient.client.buildai.litematica.LitematicReader;
+import com.zeroclient.client.module.ActionConfigEntry;
 import com.zeroclient.client.module.Module;
 import com.zeroclient.client.module.ModuleCategory;
+import com.zeroclient.client.module.TextConfigEntry;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -21,8 +23,37 @@ public class AutoBuildModule extends Module {
     private int tickCounter = 0;
     private static final int ACTION_INTERVAL_TICKS = 4;
 
+    private String schematicPath = "";
+
     public AutoBuildModule() {
         super("AutoBuild", "Tự động xây theo file .litematic trong tầm với", ModuleCategory.AI_BUILD);
+    }
+
+    @Override
+    public boolean hasConfig() {
+        return true;
+    }
+
+    @Override
+    public List<TextConfigEntry> buildTextEntries() {
+        return List.of(
+                new TextConfigEntry(
+                        "Đường dẫn file .litematic",
+                        () -> schematicPath,
+                        value -> schematicPath = value
+                )
+        );
+    }
+
+    @Override
+    public List<ActionConfigEntry> buildActionEntries() {
+        return List.of(
+                new ActionConfigEntry("Tải Schematic (tại vị trí đứng)", () -> {
+                    Minecraft mc = Minecraft.getInstance();
+                    if (mc.player == null || schematicPath.isBlank()) return;
+                    loadSchematic(new File(schematicPath), mc.player.blockPosition());
+                })
+        );
     }
 
     public void loadSchematic(File file, BlockPos origin) {

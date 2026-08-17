@@ -1,12 +1,15 @@
 package com.zeroclient.client.gui;
 
 import com.zeroclient.client.gui.theme.GuiTheme;
+import com.zeroclient.client.module.ActionConfigEntry;
 import com.zeroclient.client.module.ConfigEntry;
 import com.zeroclient.client.module.Module;
+import com.zeroclient.client.module.TextConfigEntry;
 
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.AbstractSliderButton;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -17,7 +20,7 @@ public class ModuleConfigScreen extends Screen {
     private final Screen parent;
     private final Module module;
 
-    private static final int PANEL_WIDTH = 200;
+    private static final int PANEL_WIDTH = 220;
     private static final int PANEL_TOP = 60;
     private static final int ROW_HEIGHT = 24;
 
@@ -35,9 +38,26 @@ public class ModuleConfigScreen extends Screen {
         int panelX = centerX - PANEL_WIDTH / 2;
         int y = PANEL_TOP + 24;
 
-        List<ConfigEntry> entries = module.buildConfigEntries();
-        for (ConfigEntry entry : entries) {
+        List<ConfigEntry> sliders = module.buildConfigEntries();
+        for (ConfigEntry entry : sliders) {
             addRenderableWidget(new ConfigSlider(panelX + 10, y, PANEL_WIDTH - 20, 18, entry));
+            y += ROW_HEIGHT;
+        }
+
+        List<TextConfigEntry> textEntries = module.buildTextEntries();
+        for (TextConfigEntry entry : textEntries) {
+            EditBox box = new EditBox(this.font, panelX + 10, y + 10, PANEL_WIDTH - 20, 16,
+                    Component.literal(entry.label));
+            box.setValue(entry.getter.get());
+            box.setResponder(entry.setter::accept);
+            addRenderableWidget(box);
+            y += ROW_HEIGHT + 10;
+        }
+
+        List<ActionConfigEntry> actions = module.buildActionEntries();
+        for (ActionConfigEntry entry : actions) {
+            addRenderableWidget(Button.builder(Component.literal(entry.label), btn -> entry.action.run())
+                    .bounds(panelX + 10, y, PANEL_WIDTH - 20, 18).build());
             y += ROW_HEIGHT;
         }
 
@@ -52,8 +72,15 @@ public class ModuleConfigScreen extends Screen {
 
         int centerX = this.width / 2;
         int panelX = centerX - PANEL_WIDTH / 2;
-        List<ConfigEntry> entries = module.buildConfigEntries();
-        int panelHeight = 24 + entries.size() * ROW_HEIGHT + 34;
+
+        int sliderCount = module.buildConfigEntries().size();
+        int textCount = module.buildTextEntries().size();
+        int actionCount = module.buildActionEntries().size();
+        int panelHeight = 24
+                + sliderCount * ROW_HEIGHT
+                + textCount * (ROW_HEIGHT + 10)
+                + actionCount * ROW_HEIGHT
+                + 34;
 
         g.fill(panelX, PANEL_TOP, panelX + PANEL_WIDTH, PANEL_TOP + panelHeight, GuiTheme.BG_PANEL);
         g.fill(panelX, PANEL_TOP, panelX + PANEL_WIDTH, PANEL_TOP + 1, GuiTheme.BORDER_CYAN);
@@ -62,6 +89,12 @@ public class ModuleConfigScreen extends Screen {
         g.fill(panelX, PANEL_TOP + panelHeight - 1, panelX + PANEL_WIDTH, PANEL_TOP + panelHeight, GuiTheme.BORDER_CYAN_DIM);
 
         g.drawCenteredString(this.font, module.getName() + " — Config", centerX, PANEL_TOP + 8, GuiTheme.TEXT_TITLE);
+
+        int y = PANEL_TOP + 24 + sliderCount * ROW_HEIGHT;
+        for (TextConfigEntry entry : module.buildTextEntries()) {
+            g.drawString(this.font, entry.label, panelX + 10, y, GuiTheme.TEXT_DIM, false);
+            y += ROW_HEIGHT + 10;
+        }
 
         super.render(g, mouseX, mouseY, partialTick);
     }

@@ -25,6 +25,14 @@ public abstract class Module {
         return java.util.Collections.emptyList();
     }
 
+    public java.util.List<TextConfigEntry> buildTextEntries() {
+        return java.util.Collections.emptyList();
+    }
+
+    public java.util.List<ActionConfigEntry> buildActionEntries() {
+        return java.util.Collections.emptyList();
+    }
+
     public final void toggle() {
         setEnabled(!enabled);
     }
