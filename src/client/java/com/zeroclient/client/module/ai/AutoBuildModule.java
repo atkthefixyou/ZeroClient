@@ -124,12 +124,16 @@ public class AutoBuildModule extends Module {
         Direction supportFace = BlockInteractor.findSupportFace(target);
         if (supportFace == null) {
             skippedThisSession.add(target);
+            mc.player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                    "[DEBUG] Skip " + target + " (" + task.desiredBlockId() + ") — không có mặt tựa"), false);
             return;
         }
 
         int hotbarSlot = BlockInteractor.findHotbarSlot(mc.player, task.desiredBlockId());
         if (hotbarSlot == -1) {
             skippedThisSession.add(target);
+            mc.player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                    "[DEBUG] Skip " + target + " — hết " + task.desiredBlockId() + " trong hotbar"), false);
             return;
         }
 
@@ -138,6 +142,9 @@ public class AutoBuildModule extends Module {
         tickCounter = 0;
 
         if (aimed) {
+            mc.player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                    "[DEBUG] Đặt " + task.desiredBlockId() + " tại " + target
+                            + " face=" + supportFace + " aimed=" + aimed), false);
             BlockInteractor.tryPlaceBlock(target, supportFace, hotbarSlot);
         }
     }

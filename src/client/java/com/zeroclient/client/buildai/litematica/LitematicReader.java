@@ -57,6 +57,15 @@ public class LitematicReader {
 
         int bitsPerBlock = Math.max(2, 32 - Integer.numberOfLeadingZeros(palette.size() - 1));
 
+        net.minecraft.client.Minecraft mcDebug = net.minecraft.client.Minecraft.getInstance();
+        if (mcDebug.player != null) {
+            mcDebug.player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                    String.format("[DEBUG] size=%d,%d,%d palette=%d bits=%d longArrLen=%d",
+                            sizeX, sizeY, sizeZ, palette.size(), bitsPerBlock, blockStatesArray.length)), false);
+        }
+
+        int debugPrinted = 0;
+
         for (int index = 0; index < totalBlocks; index++) {
             int paletteIndex = readBits(blockStatesArray, index, bitsPerBlock);
             if (paletteIndex <= 0 || paletteIndex >= palette.size()) continue;
@@ -72,6 +81,13 @@ public class LitematicReader {
             int worldX = posX + (sizeX < 0 ? -x : x);
             int worldY = posY + (sizeY < 0 ? -y : y);
             int worldZ = posZ + (sizeZ < 0 ? -z : z);
+
+            if (debugPrinted < 5 && mcDebug.player != null) {
+                mcDebug.player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+                        String.format("[DEBUG] idx=%d local(%d,%d,%d) world(%d,%d,%d) -> %s",
+                                index, x, y, z, worldX, worldY, worldZ, blockId)), false);
+                debugPrinted++;
+            }
 
             plan.add(new SchematicBlock(worldX, worldY, worldZ, blockId));
         }
