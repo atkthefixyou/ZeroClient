@@ -145,9 +145,9 @@ public class AutoBuildModule extends Module {
         if (tickCounter < ACTION_INTERVAL_TICKS) return;
         tickCounter = 0;
 
-        if (aimed) {
-            BlockInteractor.tryPlaceBlock(target, supportFace, hotbarSlot);
-        }
+        if (aimed && BlockInteractor.canPlaceAt(target, supportFace)) {
+    BlockInteractor.tryPlaceBlock(target, supportFace, hotbarSlot);
+}
     }
 
     private void handleMovement(Minecraft mc, BlockPos playerPos, BlockPos target) {

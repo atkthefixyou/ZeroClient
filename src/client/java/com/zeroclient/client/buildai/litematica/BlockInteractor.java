@@ -39,18 +39,30 @@ public class BlockInteractor {
         return null;
     }
 
-    public static boolean tryPlaceBlock(BlockPos target, Direction supportFace, int hotbarSlot) {
+    public static boolean canPlaceAt(BlockPos target, Direction supportFace) {
+    Minecraft mc = Minecraft.getInstance();
+    if (mc.hitResult == null || mc.hitResult.getType() != HitResult.Type.BLOCK) return false;
+
+    BlockHitResult realHit = (BlockHitResult) mc.hitResult;
+    BlockPos against = target.relative(supportFace.getOpposite());
+
+    if (!realHit.getBlockPos().equals(against)) return false;
+    if (realHit.getDirection() != supportFace) return false;
+
+    BlockPos wouldPlaceAt = realHit.getBlockPos().relative(realHit.getDirection());
+    return wouldPlaceAt.equals(target);
+}
+
+public static boolean tryPlaceBlock(BlockPos target, Direction supportFace, int hotbarSlot) {
     Minecraft mc = Minecraft.getInstance();
     if (mc.player == null || mc.gameMode == null) return false;
+    if (mc.hitResult == null || mc.hitResult.getType() != HitResult.Type.BLOCK) return false;
 
     mc.player.getInventory().setSelectedSlot(hotbarSlot);
 
-    BlockPos against = target.relative(supportFace.getOpposite());
-    Vec3 hitVec = Vec3.atCenterOf(against).relative(supportFace.getOpposite(), 0.5);
+    BlockHitResult realHitResult = (BlockHitResult) mc.hitResult;
 
-    BlockHitResult hitResult = new BlockHitResult(hitVec, supportFace, against, false);
-
-    mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
+    mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, realHitResult);
     mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
     return true;
 }
