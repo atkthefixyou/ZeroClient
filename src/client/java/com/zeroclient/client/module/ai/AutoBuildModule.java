@@ -151,27 +151,32 @@ public class AutoBuildModule extends Module {
     }
 
     private void handleMovement(Minecraft mc, BlockPos playerPos, BlockPos target) {
-        boolean needRecalc = !target.equals(currentPathTarget) || !movement.isActive();
+    boolean needRecalc = !target.equals(currentPathTarget) || !movement.isActive();
 
-        pathRecalcCounter++;
-        if (pathRecalcCounter >= PATH_RECALC_INTERVAL) {
-            pathRecalcCounter = 0;
-            needRecalc = true;
-        }
-
-        if (needRecalc) {
-            List<BlockPos> path = SimplePathfinder.findPath(playerPos, target, 24);
-            if (path.isEmpty()) {
-                skippedThisSession.add(target);
-                movement.stop();
-                return;
-            }
-            movement.setPath(path);
-            currentPathTarget = target;
-        }
-
-        movement.tick();
+    pathRecalcCounter++;
+    if (pathRecalcCounter >= PATH_RECALC_INTERVAL) {
+        pathRecalcCounter = 0;
+        needRecalc = true;
     }
+
+    if (needRecalc) {
+        List<BlockPos> path = SimplePathfinder.findPath(playerPos, target, 24);
+        if (mc.player != null) {
+            mc.player.displayClientMessage(Component.literal(
+                    "[PATH] target=" + target + " dist=" + playerPos.distSqr(target)
+                            + " pathSize=" + path.size()), false);
+        }
+        if (path.isEmpty()) {
+            skippedThisSession.add(target);
+            movement.stop();
+            return;
+        }
+        movement.setPath(path);
+        currentPathTarget = target;
+    }
+
+    movement.tick();
+}
 
     public boolean hasPlan() {
         return plan != null;
