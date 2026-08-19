@@ -3,7 +3,7 @@ package com.zeroclient.client.buildai.pathing;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Input;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
@@ -33,7 +33,7 @@ public class PathMovementController {
         if (!active || currentPath.isEmpty()) return true;
 
         Minecraft mc = Minecraft.getInstance();
-        Player player = mc.player;
+        LocalPlayer player = mc.player;
         if (player == null) return true;
 
         if (currentIndex >= currentPath.size()) {
