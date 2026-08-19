@@ -27,26 +27,24 @@ jobs:
       - name: Decompile target classes
         run: |
           mkdir -p /tmp/decompiled
-          MAPPED_JAR=$(find ~/.gradle/caches/fabric-loom/minecraftMaven -iname "minecraft-common-*.jar" 2>/dev/null | grep -v intermediary | head -1)
-          echo "Dùng jar: $MAPPED_JAR"
-          if [ -z "$MAPPED_JAR" ]; then
-            echo "LỖI: không tìm thấy jar mapped"
-            exit 1
-          fi
-          java -jar cfr.jar "$MAPPED_JAR" \
-            --outputdir /tmp/decompiled \
-            2>&1 | tail -30
+          MAPPED_JAR=$(find ~/.gradle/caches/fabric-loom/minecraftMaven -iname "minecraft-clientonly-*.jar" 2>/dev/null | grep -v intermediary | head -1)
+          echo "Dùng jar client: $MAPPED_JAR"
+          java -jar cfr.jar "$MAPPED_JAR" --outputdir /tmp/decompiled 2>&1 | tail -30
 
-      - name: Find NBT source after decompile
+          MAPPED_JAR_COMMON=$(find ~/.gradle/caches/fabric-loom/minecraftMaven -iname "minecraft-common-*.jar" 2>/dev/null | grep -v intermediary | head -1)
+          echo "Dùng jar common: $MAPPED_JAR_COMMON"
+          java -jar cfr.jar "$MAPPED_JAR_COMMON" --outputdir /tmp/decompiled 2>&1 | tail -30
+
+      - name: Find Input source after decompile
         run: |
-          find /tmp/decompiled -iname "CompoundTag.java" -o -iname "ListTag.java" -o -iname "NbtIo.java" -o -iname "Tag.java" 2>/dev/null
+          find /tmp/decompiled -iname "Input.java" -o -iname "ClientInput.java" -o -iname "KeyboardInput.java" 2>/dev/null
 
       - name: Package relevant files only
         run: |
           mkdir -p /tmp/output
-          find /tmp/decompiled -iname "CompoundTag.java" -exec cp {} /tmp/output/ \; 2>/dev/null || true
-          find /tmp/decompiled -iname "ListTag.java" -exec cp {} /tmp/output/ \; 2>/dev/null || true
-          find /tmp/decompiled -iname "NbtIo.java" -exec cp {} /tmp/output/ \; 2>/dev/null || true
+          find /tmp/decompiled -iname "Input.java" -exec cp {} /tmp/output/ \; 2>/dev/null || true
+          find /tmp/decompiled -iname "ClientInput.java" -exec cp {} /tmp/output/ \; 2>/dev/null || true
+          find /tmp/decompiled -iname "KeyboardInput.java" -exec cp {} /tmp/output/ \; 2>/dev/null || true
           ls -la /tmp/output/
 
       - uses: actions/upload-artifact@v4
