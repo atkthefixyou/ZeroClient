@@ -31,20 +31,14 @@ jobs:
           echo "Dùng jar client: $MAPPED_JAR"
           java -jar cfr.jar "$MAPPED_JAR" --outputdir /tmp/decompiled 2>&1 | tail -30
 
-          MAPPED_JAR_COMMON=$(find ~/.gradle/caches/fabric-loom/minecraftMaven -iname "minecraft-common-*.jar" 2>/dev/null | grep -v intermediary | head -1)
-          echo "Dùng jar common: $MAPPED_JAR_COMMON"
-          java -jar cfr.jar "$MAPPED_JAR_COMMON" --outputdir /tmp/decompiled 2>&1 | tail -30
-
-      - name: Find Input source after decompile
+      - name: Find MultiPlayerGameMode source after decompile
         run: |
-          find /tmp/decompiled -iname "Input.java" -o -iname "ClientInput.java" -o -iname "KeyboardInput.java" 2>/dev/null
+          find /tmp/decompiled -iname "MultiPlayerGameMode.java" 2>/dev/null
 
       - name: Package relevant files only
         run: |
           mkdir -p /tmp/output
-          find /tmp/decompiled -iname "Input.java" -exec cp {} /tmp/output/ \; 2>/dev/null || true
-          find /tmp/decompiled -iname "ClientInput.java" -exec cp {} /tmp/output/ \; 2>/dev/null || true
-          find /tmp/decompiled -iname "KeyboardInput.java" -exec cp {} /tmp/output/ \; 2>/dev/null || true
+          find /tmp/decompiled -iname "MultiPlayerGameMode.java" -exec cp {} /tmp/output/ \; 2>/dev/null || true
           ls -la /tmp/output/
 
       - uses: actions/upload-artifact@v4
