@@ -8,19 +8,9 @@ import java.util.Map;
 public class BuildPlan {
 
     private final Map<BlockPos, String> blocks = new HashMap<>();
-    private BlockPos origin;
-
-    public void setOrigin(BlockPos origin) {
-        this.origin = origin;
-    }
-
-    public BlockPos getOrigin() {
-        return origin;
-    }
 
     public void add(SchematicBlock block) {
-        if (origin == null) throw new IllegalStateException("Phải setOrigin trước khi add block");
-        BlockPos worldPos = origin.offset(block.x, block.y, block.z);
+        BlockPos worldPos = new BlockPos(block.x, block.y, block.z);
         blocks.put(worldPos, block.blockId);
     }
 

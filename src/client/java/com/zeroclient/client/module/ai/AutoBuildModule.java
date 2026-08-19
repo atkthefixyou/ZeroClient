@@ -4,17 +4,16 @@ import com.zeroclient.client.buildai.litematica.AutoAimHelper;
 import com.zeroclient.client.buildai.litematica.BlockInteractor;
 import com.zeroclient.client.buildai.litematica.BuildPlan;
 import com.zeroclient.client.buildai.litematica.BuildScanner;
-import com.zeroclient.client.buildai.litematica.LitematicReader;
+import com.zeroclient.client.buildai.litematica.LitematicaIntegration;
 import com.zeroclient.client.module.ActionConfigEntry;
 import com.zeroclient.client.module.Module;
 import com.zeroclient.client.module.ModuleCategory;
-import com.zeroclient.client.module.TextConfigEntry;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 
-import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,12 +24,10 @@ public class AutoBuildModule extends Module {
     private int tickCounter = 0;
     private static final int ACTION_INTERVAL_TICKS = 4;
 
-    private String schematicPath = "";
-
     private final Set<BlockPos> skippedThisSession = new HashSet<>();
 
     public AutoBuildModule() {
-        super("AutoBuild", "Tự động xây theo file .litematic trong tầm với", ModuleCategory.AI_BUILD);
+        super("AutoBuild", "Tự động xây theo blueprint đang mở trong Litematica", ModuleCategory.AI_BUILD);
     }
 
     @Override
@@ -39,47 +36,38 @@ public class AutoBuildModule extends Module {
     }
 
     @Override
-    public List<TextConfigEntry> buildTextEntries() {
-        return List.of(
-                new TextConfigEntry(
-                        "Đường dẫn file .litematic",
-                        () -> schematicPath,
-                        value -> schematicPath = value
-                )
-        );
-    }
-
-    @Override
     public List<ActionConfigEntry> buildActionEntries() {
         return List.of(
-                new ActionConfigEntry("Tải Schematic (tại vị trí đứng)", () -> {
-                    Minecraft mc = Minecraft.getInstance();
-                    if (mc.player == null || schematicPath.isBlank()) return;
-                    loadSchematic(new File(schematicPath), mc.player.blockPosition());
-                })
+                new ActionConfigEntry("Đồng bộ từ Litematica (placement đang chọn)", this::syncFromLitematica)
         );
     }
 
-    public void loadSchematic(File file, BlockPos origin) {
-        try {
-            this.plan = LitematicReader.read(file, origin);
-            skippedThisSession.clear();
-            Minecraft mc = Minecraft.getInstance();
+    private void syncFromLitematica() {
+        Minecraft mc = Minecraft.getInstance();
+
+        if (!LitematicaIntegration.isLitematicaLoaded()) {
             if (mc.player != null) {
                 mc.player.displayClientMessage(
-                        net.minecraft.network.chat.Component.literal(
-                                "Đã tải schematic: " + plan.size() + " block"), false);
+                        Component.literal("Chưa cài mod Litematica — cần cài để dùng AutoBuild"), false);
             }
-        } catch (Exception e) {
-            plan = null;
-            e.printStackTrace();
-            Minecraft mc = Minecraft.getInstance();
+            return;
+        }
+
+        BuildPlan newPlan = LitematicaIntegration.readActivePlacement();
+        if (newPlan == null) {
             if (mc.player != null) {
-                String detail = e.getClass().getSimpleName() + ": " + e.getMessage();
                 mc.player.displayClientMessage(
-                        net.minecraft.network.chat.Component.literal(
-                                "Lỗi đọc schematic: " + detail), false);
+                        Component.literal("Không tìm thấy placement đang chọn trong Litematica — "
+                                + "hãy Load Schematic + chọn Placement trước"), false);
             }
+            return;
+        }
+
+        this.plan = newPlan;
+        skippedThisSession.clear();
+        if (mc.player != null) {
+            mc.player.displayClientMessage(
+                    Component.literal("Đã đồng bộ: " + plan.size() + " block từ Litematica"), false);
         }
     }
 
@@ -107,7 +95,6 @@ public class AutoBuildModule extends Module {
         }
 
         BlockPos target = task.pos();
-
         boolean aimed = AutoAimHelper.turnTowards(target);
 
         if (task.type() == BuildScanner.TaskType.BREAK) {
@@ -124,16 +111,12 @@ public class AutoBuildModule extends Module {
         Direction supportFace = BlockInteractor.findSupportFace(target);
         if (supportFace == null) {
             skippedThisSession.add(target);
-            mc.player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                    "[DEBUG] Skip " + target + " (" + task.desiredBlockId() + ") — không có mặt tựa"), false);
             return;
         }
 
         int hotbarSlot = BlockInteractor.findHotbarSlot(mc.player, task.desiredBlockId());
         if (hotbarSlot == -1) {
             skippedThisSession.add(target);
-            mc.player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                    "[DEBUG] Skip " + target + " — hết " + task.desiredBlockId() + " trong hotbar"), false);
             return;
         }
 
@@ -142,9 +125,6 @@ public class AutoBuildModule extends Module {
         tickCounter = 0;
 
         if (aimed) {
-            mc.player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                    "[DEBUG] Đặt " + task.desiredBlockId() + " tại " + target
-                            + " face=" + supportFace + " aimed=" + aimed), false);
             BlockInteractor.tryPlaceBlock(target, supportFace, hotbarSlot);
         }
     }
