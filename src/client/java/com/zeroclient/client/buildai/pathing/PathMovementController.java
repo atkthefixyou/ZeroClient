@@ -1,23 +1,46 @@
 package com.zeroclient.client.buildai.pathing;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.ClientInput;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Input;
-import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
 public class PathMovementController {
 
+    private static class PathInput extends ClientInput {
+        boolean forward = false;
+        boolean jump = false;
+
+        @Override
+        public void tick() {
+            this.keyPresses = new Input(forward, false, false, false, jump, false, false);
+            this.moveVector = new Vec2(0.0f, forward ? 1.0f : 0.0f);
+        }
+    }
+
     private List<BlockPos> currentPath = List.of();
     private int currentIndex = 0;
     private boolean active = false;
+
+    private ClientInput originalInput;
+    private PathInput pathInput;
 
     public void setPath(List<BlockPos> path) {
         this.currentPath = path;
         this.currentIndex = 0;
         this.active = !path.isEmpty();
+
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && mc.player.input != pathInput) {
+            originalInput = mc.player.input;
+            pathInput = new PathInput();
+            mc.player.input = pathInput;
+        }
     }
 
     public boolean isActive() {
@@ -27,6 +50,12 @@ public class PathMovementController {
     public void stop() {
         active = false;
         currentPath = List.of();
+
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && originalInput != null) {
+            mc.player.input = originalInput;
+            originalInput = null;
+        }
     }
 
     public boolean tick() {
@@ -37,7 +66,7 @@ public class PathMovementController {
         if (player == null) return true;
 
         if (currentIndex >= currentPath.size()) {
-            active = false;
+            stop();
             return true;
         }
 
@@ -57,13 +86,9 @@ public class PathMovementController {
         float targetYaw = (float) (Math.toDegrees(Math.atan2(dz, dx)) - 90.0);
         player.setYRot(targetYaw);
 
-        if (player.input != null) {
-    player.input.forwardImpulse = 1.0f;
-    player.input.leftImpulse = 0.0f;
-}
-
-        if (waypoint.getY() > player.blockPosition().getY()) {
-            player.jumpFromGround();
+        if (pathInput != null) {
+            pathInput.forward = true;
+            pathInput.jump = waypoint.getY() > player.blockPosition().getY();
         }
 
         return false;
