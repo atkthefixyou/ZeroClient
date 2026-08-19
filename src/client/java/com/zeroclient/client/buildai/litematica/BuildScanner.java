@@ -37,10 +37,11 @@ public class BuildScanner {
             }
         }
 
-        tasks.sort((a, b) -> Double.compare(
-                a.pos().distSqr(playerPos),
-                b.pos().distSqr(playerPos)
-        ));
+        tasks.sort((a, b) -> {
+            int layerCompare = Integer.compare(a.pos().getY(), b.pos().getY());
+            if (layerCompare != 0) return layerCompare;
+            return Double.compare(a.pos().distSqr(playerPos), b.pos().distSqr(playerPos));
+        });
 
         return tasks;
     }

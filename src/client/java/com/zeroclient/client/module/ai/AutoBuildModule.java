@@ -5,6 +5,8 @@ import com.zeroclient.client.buildai.litematica.BlockInteractor;
 import com.zeroclient.client.buildai.litematica.BuildPlan;
 import com.zeroclient.client.buildai.litematica.BuildScanner;
 import com.zeroclient.client.buildai.litematica.LitematicaIntegration;
+import com.zeroclient.client.buildai.pathing.PathMovementController;
+import com.zeroclient.client.buildai.pathing.SimplePathfinder;
 import com.zeroclient.client.module.ActionConfigEntry;
 import com.zeroclient.client.module.Module;
 import com.zeroclient.client.module.ModuleCategory;
@@ -23,8 +25,13 @@ public class AutoBuildModule extends Module {
     private BuildPlan plan;
     private int tickCounter = 0;
     private static final int ACTION_INTERVAL_TICKS = 4;
+    private static final double REACH_DISTANCE = 4.5;
 
     private final Set<BlockPos> skippedThisSession = new HashSet<>();
+    private final PathMovementController movement = new PathMovementController();
+    private BlockPos currentPathTarget;
+    private int pathRecalcCounter = 0;
+    private static final int PATH_RECALC_INTERVAL = 20;
 
     public AutoBuildModule() {
         super("AutoBuild", "Tự động xây theo blueprint đang mở trong Litematica", ModuleCategory.AI_BUILD);
@@ -65,6 +72,8 @@ public class AutoBuildModule extends Module {
 
         this.plan = newPlan;
         skippedThisSession.clear();
+        movement.stop();
+        currentPathTarget = null;
         if (mc.player != null) {
             mc.player.displayClientMessage(
                     Component.literal("Đã đồng bộ: " + plan.size() + " block từ Litematica"), false);
@@ -79,7 +88,7 @@ public class AutoBuildModule extends Module {
         if (mc.player == null || mc.level == null) return;
 
         BlockPos playerPos = mc.player.blockPosition();
-        List<BuildScanner.BuildTask> tasks = BuildScanner.scan(plan, playerPos, 6);
+        List<BuildScanner.BuildTask> tasks = BuildScanner.scan(plan, playerPos, 20);
 
         BuildScanner.BuildTask task = null;
         for (BuildScanner.BuildTask t : tasks) {
@@ -91,10 +100,22 @@ public class AutoBuildModule extends Module {
 
         if (task == null) {
             if (!tasks.isEmpty()) skippedThisSession.clear();
+            movement.stop();
             return;
         }
 
         BlockPos target = task.pos();
+        double distToTarget = Math.sqrt(mc.player.position().distanceToSqr(
+                target.getX() + 0.5, target.getY() + 0.5, target.getZ() + 0.5));
+
+        if (distToTarget > REACH_DISTANCE) {
+            handleMovement(mc, playerPos, target);
+            return;
+        }
+
+        movement.stop();
+        currentPathTarget = null;
+
         boolean aimed = AutoAimHelper.turnTowards(target);
 
         if (task.type() == BuildScanner.TaskType.BREAK) {
@@ -127,6 +148,29 @@ public class AutoBuildModule extends Module {
         if (aimed) {
             BlockInteractor.tryPlaceBlock(target, supportFace, hotbarSlot);
         }
+    }
+
+    private void handleMovement(Minecraft mc, BlockPos playerPos, BlockPos target) {
+        boolean needRecalc = !target.equals(currentPathTarget) || !movement.isActive();
+
+        pathRecalcCounter++;
+        if (pathRecalcCounter >= PATH_RECALC_INTERVAL) {
+            pathRecalcCounter = 0;
+            needRecalc = true;
+        }
+
+        if (needRecalc) {
+            List<BlockPos> path = SimplePathfinder.findPath(playerPos, target, 24);
+            if (path.isEmpty()) {
+                skippedThisSession.add(target);
+                movement.stop();
+                return;
+            }
+            movement.setPath(path);
+            currentPathTarget = target;
+        }
+
+        movement.tick();
     }
 
     public boolean hasPlan() {
