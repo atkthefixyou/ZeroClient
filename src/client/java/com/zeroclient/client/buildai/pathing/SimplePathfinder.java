@@ -119,8 +119,6 @@ public class SimplePathfinder {
     }
 
     private static boolean isSolid(Level level, BlockPos pos) {
-        var state = level.getBlockState(pos);
-        return !state.isAir() && state.getCollisionShape(level, pos) != null
-                && !state.getCollisionShape(level, pos).isEmpty();
-    }
+    return !level.getBlockState(pos).isAir();
+}
 }

@@ -160,7 +160,20 @@ public class AutoBuildModule extends Module {
     }
 
     if (needRecalc) {
-        List<BlockPos> path = SimplePathfinder.findPath(playerPos, target, 24);
+        List<BlockPos> path;
+        try {
+            path = SimplePathfinder.findPath(playerPos, target, 24);
+        } catch (Throwable t) {
+            t.printStackTrace();
+            if (mc.player != null) {
+                mc.player.displayClientMessage(Component.literal(
+                        "[PATH] LỖI: " + t.getClass().getSimpleName() + ": " + t.getMessage()), false);
+            }
+            skippedThisSession.add(target);
+            movement.stop();
+            return;
+        }
+
         if (mc.player != null) {
             mc.player.displayClientMessage(Component.literal(
                     "[PATH] target=" + target + " dist=" + playerPos.distSqr(target)
