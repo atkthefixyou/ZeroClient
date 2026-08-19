@@ -12,6 +12,8 @@ import net.minecraft.world.phys.Vec3;
 
 public class BlockInteractor {
 
+    private static BlockPos currentBreakingTarget = null;
+
     public static int findHotbarSlot(Player player, String blockId) {
         for (int i = 0; i < 9; i++) {
             ItemStack stack = player.getInventory().getItem(i);
@@ -40,41 +42,60 @@ public class BlockInteractor {
     }
 
     public static boolean canPlaceAt(BlockPos target, Direction supportFace) {
-    Minecraft mc = Minecraft.getInstance();
-    if (mc.hitResult == null || mc.hitResult.getType() != HitResult.Type.BLOCK) return false;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.hitResult == null || mc.hitResult.getType() != HitResult.Type.BLOCK) return false;
 
-    BlockHitResult realHit = (BlockHitResult) mc.hitResult;
-    BlockPos against = target.relative(supportFace.getOpposite());
+        BlockHitResult realHit = (BlockHitResult) mc.hitResult;
+        BlockPos against = target.relative(supportFace.getOpposite());
 
-    if (!realHit.getBlockPos().equals(against)) return false;
-    if (realHit.getDirection() != supportFace) return false;
+        if (!realHit.getBlockPos().equals(against)) return false;
+        if (realHit.getDirection() != supportFace) return false;
 
-    BlockPos wouldPlaceAt = realHit.getBlockPos().relative(realHit.getDirection());
-    return wouldPlaceAt.equals(target);
-}
+        BlockPos wouldPlaceAt = realHit.getBlockPos().relative(realHit.getDirection());
+        return wouldPlaceAt.equals(target);
+    }
 
-public static boolean tryPlaceBlock(BlockPos target, Direction supportFace, int hotbarSlot) {
-    Minecraft mc = Minecraft.getInstance();
-    if (mc.player == null || mc.gameMode == null) return false;
-    if (mc.hitResult == null || mc.hitResult.getType() != HitResult.Type.BLOCK) return false;
+    public static boolean tryPlaceBlock(BlockPos target, Direction supportFace, int hotbarSlot) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.gameMode == null) return false;
+        if (mc.hitResult == null || mc.hitResult.getType() != HitResult.Type.BLOCK) return false;
 
-    mc.player.getInventory().setSelectedSlot(hotbarSlot);
+        mc.player.getInventory().setSelectedSlot(hotbarSlot);
 
-    BlockHitResult realHitResult = (BlockHitResult) mc.hitResult;
+        BlockHitResult realHitResult = (BlockHitResult) mc.hitResult;
 
-    mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, realHitResult);
-    mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
-    return true;
-}
+        mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, realHitResult);
+        mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        return true;
+    }
 
     public static boolean tryBreakBlock(BlockPos target) {
-    Minecraft mc = Minecraft.getInstance();
-    if (mc.player == null || mc.gameMode == null) return false;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.gameMode == null) return false;
+        if (mc.hitResult == null || mc.hitResult.getType() != HitResult.Type.BLOCK) return false;
 
-    mc.gameMode.destroyBlock(target);
-    mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
-    return true;
-}
+        BlockHitResult realHit = (BlockHitResult) mc.hitResult;
+        if (!realHit.getBlockPos().equals(target)) return false;
+
+        Direction direction = realHit.getDirection();
+
+        if (!target.equals(currentBreakingTarget)) {
+            mc.gameMode.startDestroyBlock(target, direction);
+            currentBreakingTarget = target;
+        } else {
+            mc.gameMode.continueDestroyBlock(target, direction);
+        }
+
+        return true;
+    }
+
+    public static void stopBreaking() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.gameMode != null) {
+            mc.gameMode.stopDestroyBlock();
+        }
+        currentBreakingTarget = null;
+    }
 
     public static boolean isLookingAt(BlockPos target) {
         Minecraft mc = Minecraft.getInstance();

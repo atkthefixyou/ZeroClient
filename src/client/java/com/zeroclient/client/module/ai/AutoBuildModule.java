@@ -31,7 +31,7 @@ public class AutoBuildModule extends Module {
     private final PathMovementController movement = new PathMovementController();
     private BlockPos currentPathTarget;
     private int pathRecalcCounter = 0;
-    private static final int PATH_RECALC_INTERVAL = 20;
+    private static final int PATH_RECALC_INTERVAL = 6;
 
     public AutoBuildModule() {
         super("AutoBuild", "Tự động xây theo blueprint đang mở trong Litematica", ModuleCategory.AI_BUILD);
@@ -119,15 +119,15 @@ public class AutoBuildModule extends Module {
         boolean aimed = AutoAimHelper.turnTowards(target);
 
         if (task.type() == BuildScanner.TaskType.BREAK) {
-            tickCounter++;
-            if (tickCounter < ACTION_INTERVAL_TICKS) return;
-            tickCounter = 0;
-
             if (aimed && BlockInteractor.isLookingAt(target)) {
                 BlockInteractor.tryBreakBlock(target);
+            } else {
+                BlockInteractor.stopBreaking();
             }
             return;
         }
+
+        BlockInteractor.stopBreaking();
 
         Direction supportFace = BlockInteractor.findSupportFace(target);
         if (supportFace == null) {
@@ -146,50 +146,32 @@ public class AutoBuildModule extends Module {
         tickCounter = 0;
 
         if (aimed && BlockInteractor.canPlaceAt(target, supportFace)) {
-    BlockInteractor.tryPlaceBlock(target, supportFace, hotbarSlot);
-}
+            BlockInteractor.tryPlaceBlock(target, supportFace, hotbarSlot);
+        }
     }
 
     private void handleMovement(Minecraft mc, BlockPos playerPos, BlockPos target) {
-    boolean needRecalc = !target.equals(currentPathTarget) || !movement.isActive();
+        boolean needRecalc = !target.equals(currentPathTarget) || !movement.isActive();
 
-    pathRecalcCounter++;
-    if (pathRecalcCounter >= PATH_RECALC_INTERVAL) {
-        pathRecalcCounter = 0;
-        needRecalc = true;
-    }
+        pathRecalcCounter++;
+        if (pathRecalcCounter >= PATH_RECALC_INTERVAL) {
+            pathRecalcCounter = 0;
+            needRecalc = true;
+        }
 
-    if (needRecalc) {
-        List<BlockPos> path;
-        try {
-            path = SimplePathfinder.findPath(playerPos, target, 24);
-        } catch (Throwable t) {
-            t.printStackTrace();
-            if (mc.player != null) {
-                mc.player.displayClientMessage(Component.literal(
-                        "[PATH] LỖI: " + t.getClass().getSimpleName() + ": " + t.getMessage()), false);
+        if (needRecalc) {
+            List<BlockPos> path = SimplePathfinder.findPath(playerPos, target, 24);
+            if (path.isEmpty()) {
+                skippedThisSession.add(target);
+                movement.stop();
+                return;
             }
-            skippedThisSession.add(target);
-            movement.stop();
-            return;
+            movement.setPath(path);
+            currentPathTarget = target;
         }
 
-        if (mc.player != null) {
-            mc.player.displayClientMessage(Component.literal(
-                    "[PATH] target=" + target + " dist=" + playerPos.distSqr(target)
-                            + " pathSize=" + path.size()), false);
-        }
-        if (path.isEmpty()) {
-            skippedThisSession.add(target);
-            movement.stop();
-            return;
-        }
-        movement.setPath(path);
-        currentPathTarget = target;
+        movement.tick();
     }
-
-    movement.tick();
-}
 
     public boolean hasPlan() {
         return plan != null;
