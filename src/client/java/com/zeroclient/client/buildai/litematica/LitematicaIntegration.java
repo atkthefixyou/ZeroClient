@@ -48,9 +48,9 @@ public class LitematicaIntegration {
             log("Bước 5: schematic = " + schematic);
             if (schematic == null) return null;
 
-            Method getPos = placement.getClass().getMethod("getPos");
-            Object mcBlockPosPlacement = getPos.invoke(placement);
-            log("Bước 6: placement.getPos() = " + mcBlockPosPlacement);
+            Method getOrigin = placement.getClass().getMethod("getOrigin");
+Object mcBlockPosPlacement = getOrigin.invoke(placement);
+log("Bước 6: placement.getOrigin() = " + mcBlockPosPlacement);
 
             BlockPos origin = convertToZeroClientBlockPos(mcBlockPosPlacement);
 
