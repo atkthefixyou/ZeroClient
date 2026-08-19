@@ -102,7 +102,7 @@ log("Bước 6: placement.getOrigin() = " + mcBlockPosPlacement);
 
     private static void readContainer(Object container, BlockPos origin, BlockPos regionPos,
                                        BlockPos regionSize, BuildPlan plan) throws Exception {
-        Method getBlockState = container.getClass().getMethod("getBlockState", int.class, int.class, int.class);
+        Method get = container.getClass().getMethod("get", int.class, int.class, int.class);
 
         int width = Math.abs(regionSize.getX());
         int height = Math.abs(regionSize.getY());
@@ -111,7 +111,7 @@ log("Bước 6: placement.getOrigin() = " + mcBlockPosPlacement);
         for (int y = 0; y < height; y++) {
             for (int z = 0; z < length; z++) {
                 for (int x = 0; x < width; x++) {
-                    Object blockStateObj = getBlockState.invoke(container, x, y, z);
+                    Object blockStateObj = get.invoke(container, x, y, z);
                     if (blockStateObj == null) continue;
 
                     String blockId = extractBlockId(blockStateObj);
