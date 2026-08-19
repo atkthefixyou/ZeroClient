@@ -58,10 +58,9 @@ public class PathMovementController {
         player.setYRot(targetYaw);
 
         if (player.input != null) {
-            Input old = player.input.keyPresses;
-            player.input.keyPresses = new Input(true, false, false, false,
-                    old.jump(), old.shift(), old.sprint());
-        }
+    player.input.forwardImpulse = 1.0f;
+    player.input.leftImpulse = 0.0f;
+}
 
         if (waypoint.getY() > player.blockPosition().getY()) {
             player.jumpFromGround();

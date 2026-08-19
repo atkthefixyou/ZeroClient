@@ -40,27 +40,29 @@ public class BlockInteractor {
     }
 
     public static boolean tryPlaceBlock(BlockPos target, Direction supportFace, int hotbarSlot) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.gameMode == null) return false;
+    Minecraft mc = Minecraft.getInstance();
+    if (mc.player == null || mc.gameMode == null) return false;
 
-        mc.player.getInventory().setSelectedSlot(hotbarSlot);
+    mc.player.getInventory().setSelectedSlot(hotbarSlot);
 
-        BlockPos against = target.relative(supportFace.getOpposite());
-        Vec3 hitVec = Vec3.atCenterOf(against).relative(supportFace.getOpposite(), 0.5);
+    BlockPos against = target.relative(supportFace.getOpposite());
+    Vec3 hitVec = Vec3.atCenterOf(against).relative(supportFace.getOpposite(), 0.5);
 
-        BlockHitResult hitResult = new BlockHitResult(hitVec, supportFace, against, false);
+    BlockHitResult hitResult = new BlockHitResult(hitVec, supportFace, against, false);
 
-        mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
-        return true;
-    }
+    mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
+    mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+    return true;
+}
 
     public static boolean tryBreakBlock(BlockPos target) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.gameMode == null) return false;
+    Minecraft mc = Minecraft.getInstance();
+    if (mc.player == null || mc.gameMode == null) return false;
 
-        mc.gameMode.destroyBlock(target);
-        return true;
-    }
+    mc.gameMode.destroyBlock(target);
+    mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+    return true;
+}
 
     public static boolean isLookingAt(BlockPos target) {
         Minecraft mc = Minecraft.getInstance();
