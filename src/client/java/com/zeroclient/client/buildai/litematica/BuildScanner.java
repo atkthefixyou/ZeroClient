@@ -12,27 +12,26 @@ public class BuildScanner {
 
     public enum TaskType { PLACE, BREAK }
 
-    public record BuildTask(BlockPos pos, TaskType type, String desiredBlockId) {}
+    public record BuildTask(BlockPos pos, TaskType type, BlockState desiredState) {}
 
     public static List<BuildTask> scan(BuildPlan plan, BlockPos playerPos, int maxRadius) {
         List<BuildTask> tasks = new ArrayList<>();
         var level = Minecraft.getInstance().level;
         if (level == null) return tasks;
 
-        for (Map.Entry<BlockPos, String> entry : plan.getAllBlocks().entrySet()) {
+        for (Map.Entry<BlockPos, BlockState> entry : plan.getAllBlocks().entrySet()) {
             BlockPos pos = entry.getKey();
-            String desiredId = entry.getValue();
+            BlockState desiredState = entry.getValue();
 
             if (pos.distSqr(playerPos) > (double) maxRadius * maxRadius) continue;
 
             BlockState currentState = level.getBlockState(pos);
-            String currentId = blockStateToId(currentState);
 
-            if (!desiredId.equals(currentId)) {
+            if (!currentState.equals(desiredState)) {
                 if (currentState.isAir()) {
-                    tasks.add(new BuildTask(pos, TaskType.PLACE, desiredId));
+                    tasks.add(new BuildTask(pos, TaskType.PLACE, desiredState));
                 } else {
-                    tasks.add(new BuildTask(pos, TaskType.BREAK, desiredId));
+                    tasks.add(new BuildTask(pos, TaskType.BREAK, desiredState));
                 }
             }
         }
@@ -44,11 +43,5 @@ public class BuildScanner {
         });
 
         return tasks;
-    }
-
-    private static String blockStateToId(BlockState state) {
-        if (state.isAir()) return "minecraft:air";
-        var key = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock());
-        return key != null ? key.toString() : "minecraft:air";
     }
 }

@@ -1,24 +1,25 @@
 package com.zeroclient.client.buildai.litematica;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class BuildPlan {
 
-    private final Map<BlockPos, String> blocks = new HashMap<>();
+    private final Map<BlockPos, BlockState> blocks = new HashMap<>();
 
     public void add(SchematicBlock block) {
         BlockPos worldPos = new BlockPos(block.x, block.y, block.z);
-        blocks.put(worldPos, block.blockId);
+        blocks.put(worldPos, block.state);
     }
 
-    public String getDesiredBlockId(BlockPos worldPos) {
+    public BlockState getDesiredState(BlockPos worldPos) {
         return blocks.get(worldPos);
     }
 
-    public Map<BlockPos, String> getAllBlocks() {
+    public Map<BlockPos, BlockState> getAllBlocks() {
         return blocks;
     }
 

@@ -6,6 +6,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -14,13 +16,12 @@ public class BlockInteractor {
 
     private static BlockPos currentBreakingTarget = null;
 
-    public static int findHotbarSlot(Player player, String blockId) {
+    public static int findHotbarSlot(Player player, Block desiredBlock) {
         for (int i = 0; i < 9; i++) {
             ItemStack stack = player.getInventory().getItem(i);
             if (stack.isEmpty()) continue;
             if (stack.getItem() instanceof BlockItem blockItem) {
-                var key = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(blockItem.getBlock());
-                if (key != null && key.toString().equals(blockId)) {
+                if (blockItem.getBlock() == desiredBlock) {
                     return i;
                 }
             }
@@ -55,7 +56,8 @@ public class BlockInteractor {
         return wouldPlaceAt.equals(target);
     }
 
-    public static boolean tryPlaceBlock(BlockPos target, Direction supportFace, int hotbarSlot) {
+    public static boolean tryPlaceBlock(BlockPos target, Direction supportFace, int hotbarSlot,
+                                         BlockState desiredState) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.gameMode == null) return false;
         if (mc.hitResult == null || mc.hitResult.getType() != HitResult.Type.BLOCK) return false;
@@ -66,6 +68,11 @@ public class BlockInteractor {
 
         mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND, realHitResult);
         mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+
+        if (mc.level != null) {
+            mc.level.setBlock(target, desiredState, 3);
+        }
+
         return true;
     }
 

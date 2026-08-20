@@ -90,32 +90,40 @@ public class AutoBuildModule extends Module {
         BlockPos playerPos = mc.player.blockPosition();
         List<BuildScanner.BuildTask> tasks = BuildScanner.scan(plan, playerPos, 20);
 
-        BuildScanner.BuildTask task = null;
+        BuildScanner.BuildTask reachableTask = null;
+        BuildScanner.BuildTask nearestTask = null;
+
         for (BuildScanner.BuildTask t : tasks) {
-            if (!skippedThisSession.contains(t.pos())) {
-                task = t;
+            if (skippedThisSession.contains(t.pos())) continue;
+            if (nearestTask == null) nearestTask = t;
+
+            double dist = Math.sqrt(mc.player.position().distanceToSqr(
+                    t.pos().getX() + 0.5, t.pos().getY() + 0.5, t.pos().getZ() + 0.5));
+            if (dist <= REACH_DISTANCE) {
+                reachableTask = t;
                 break;
             }
         }
 
-        if (task == null) {
+        if (nearestTask == null) {
             if (!tasks.isEmpty()) skippedThisSession.clear();
             movement.stop();
             return;
         }
 
-        BlockPos target = task.pos();
-        double distToTarget = Math.sqrt(mc.player.position().distanceToSqr(
-                target.getX() + 0.5, target.getY() + 0.5, target.getZ() + 0.5));
-
-        if (distToTarget > REACH_DISTANCE) {
-            handleMovement(mc, playerPos, target);
+        if (reachableTask == null) {
+            handleMovement(mc, playerPos, nearestTask.pos());
             return;
         }
 
         movement.stop();
         currentPathTarget = null;
 
+        processReachableTask(mc, reachableTask);
+    }
+
+    private void processReachableTask(Minecraft mc, BuildScanner.BuildTask task) {
+        BlockPos target = task.pos();
         boolean aimed = AutoAimHelper.turnTowards(target);
 
         if (task.type() == BuildScanner.TaskType.BREAK) {
@@ -135,7 +143,7 @@ public class AutoBuildModule extends Module {
             return;
         }
 
-        int hotbarSlot = BlockInteractor.findHotbarSlot(mc.player, task.desiredBlockId());
+        int hotbarSlot = BlockInteractor.findHotbarSlot(mc.player, task.desiredState().getBlock());
         if (hotbarSlot == -1) {
             skippedThisSession.add(target);
             return;
@@ -146,7 +154,7 @@ public class AutoBuildModule extends Module {
         tickCounter = 0;
 
         if (aimed && BlockInteractor.canPlaceAt(target, supportFace)) {
-            BlockInteractor.tryPlaceBlock(target, supportFace, hotbarSlot);
+            BlockInteractor.tryPlaceBlock(target, supportFace, hotbarSlot, task.desiredState());
         }
     }
 
